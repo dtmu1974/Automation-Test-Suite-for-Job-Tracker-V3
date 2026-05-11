@@ -26,15 +26,16 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      # ── Positive Tests ───────────────────────────────────────────────────
-      - name: Run Positive Tests (Login + Profile)
-        run: node job_tracker_automation.js
+      # ── Run all tests ────────────────────────────────────────────────────
+      - name: Run All Tests (Positive + Negative)
+        run: npm run test:all
 
-      # ── Negative Tests ───────────────────────────────────────────────────
-      - name: Run Negative Tests (Invalid Login)
-        run: node job_tracker_negative_test.js
+      # ── Generate combined report ─────────────────────────────────────────
+      - name: Generate Combined Report
+        if: always()
+        run: node generate_combined_report.js
 
-      # ── Upload both reports ──────────────────────────────────────────────
+      # ── Upload all 3 reports ─────────────────────────────────────────────
       - name: Upload Positive Test Report
         if: always()
         uses: actions/upload-artifact@v4
@@ -48,3 +49,10 @@ jobs:
         with:
           name: negative-test-report
           path: job_tracker_negative_test_report.html
+
+      - name: Upload Combined Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-test-report
+          path: job_tracker_combined_report.html
