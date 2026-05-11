@@ -2,11 +2,10 @@
   "name": "automation-test-suite-for-job-tracker-v3",
   "version": "1.0.0",
   "description": "Playwright automation tests for Job Tracker V3",
-  "main": "job_tracker_automation.js",
   "scripts": {
-    "test": "node job_tracker_automation.js",
-    "test:negative": "node job_tracker_negative_test.js",
-    "test:all": "node job_tracker_automation.js && node job_tracker_negative_test.js"
+    "test:all":      "node job_tracker_automation.js && node job_tracker_negative_test.js",
+    "test:positive": "node job_tracker_automation.js",
+    "test:negative": "node job_tracker_negative_test.js"
   },
   "dependencies": {
     "playwright": "^1.44.0"
