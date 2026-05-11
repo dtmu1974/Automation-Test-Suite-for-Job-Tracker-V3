@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Test Report — Job Tracker Automation</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:        #0a0d12;
+    --surface:   #111620;
+    --border:    #1e2535;
+    --pass:      #00e5a0;
+    --pass-dim:  #00e5a020;
+    --fail:      #ff4d6d;
+    --fail-dim:  #ff4d6d20;
+    --warn:      #ffc94d;
+    --accent:    #4d9fff;
+    --accent-dim:#4d9fff18;
+    --text:      #e8edf5;
+    --muted:     #5a6480;
+    --mono:      'JetBrains Mono', monospace;
+    --sans:      'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 48px 24px 80px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Atmospheric grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 700px; height: 500px;
+    background: radial-gradient(ellipse, #00e5a010 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Header ── */
+  header {
+    margin-bottom: 48px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--pass);
+    background: var(--pass-dim);
+    border: 1px solid var(--pass);
+    border-radius: 4px;
+    padding: 4px 10px;
+    margin-bottom: 20px;
+  }
+
+  .badge::before { content: '●'; font-size: 8px; }
+
+  h1 {
+    font-size: clamp(28px, 5vw, 46px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+
+  h1 span {
+    color: var(--pass);
+  }
+
+  .meta {
+    margin-top: 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+
+  .meta span { display: flex; align-items: center; gap: 6px; }
+
+  /* ── Summary cards ── */
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 40px;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  @media (max-width: 600px) { .summary { grid-template-columns: repeat(2,1fr); } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .card.total::before  { background: var(--accent); }
+  .card.passed::before { background: var(--pass); }
+  .card.failed::before { background: var(--fail); }
+  .card.duration::before { background: var(--warn); }
+
+  .card-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .card-value {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+
+  .card.total .card-value  { color: var(--accent); }
+  .card.passed .card-value { color: var(--pass); }
+  .card.failed .card-value { color: var(--fail); }
+  .card.duration .card-value { color: var(--warn); font-size: 26px; }
+
+  .card-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: var(--mono);
+  }
+
+  /* ── Section title ── */
+  .section-title {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Test steps ── */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 40px;
+  }
+
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    align-items: start;
+    gap: 16px;
+    animation: fadeUp 0.5s ease both;
+    transition: border-color 0.2s;
+  }
+
+  .step:hover { border-color: var(--accent); }
+
+  .step.pass { border-left: 3px solid var(--pass); }
+  .step.fail { border-left: 3px solid var(--fail); }
+
+  .step-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    padding-top: 2px;
+    text-align: right;
+  }
+
+  .step-body {}
+
+  .step-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .step-desc {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .step-url {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    margin-top: 6px;
+    word-break: break-all;
+  }
+
+  .step-status {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+
+  .status-pill {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .pass .status-pill { background: var(--pass-dim); color: var(--pass); border: 1px solid var(--pass); }
+  .fail .status-pill { background: var(--fail-dim); color: var(--fail); border: 1px solid var(--fail); }
+
+  .step-time {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* ── Log output ── */
+  .log-block {
+    background: #070a0f;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 40px;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .log-line {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 2;
+    display: flex;
+    gap: 16px;
+    align-items: baseline;
+  }
+
+  .log-time { color: var(--muted); min-width: 60px; }
+  .log-icon { min-width: 18px; }
+  .log-msg  { color: #c8d0e0; }
+  .log-msg.ok   { color: var(--pass); }
+  .log-msg.info { color: var(--accent); }
+  .log-msg.dim  { color: var(--muted); }
+
+  /* ── Environment ── */
+  .env-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 40px;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+
+  @media (max-width: 500px) { .env-grid { grid-template-columns: 1fr; } }
+
+  .env-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .env-key {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .env-val {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 500;
+    text-align: right;
+  }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    animation: fadeUp 0.6s 0.5s ease both;
+  }
+
+  footer strong { color: var(--pass); }
+
+  /* ── Progress bar ── */
+  .progress-wrap {
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 40px;
+    animation: fadeUp 0.6s 0.05s ease both;
+  }
+
+  .progress-bar {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--pass), var(--accent));
+    animation: grow 1s 0.4s ease both;
+    transform-origin: left;
+  }
+
+  @keyframes grow { from { width: 0 } to { width: 100% } }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- Header -->
+  <header>
+    <div class="badge">Automation Report</div>
+    <h1>Job Tracker <span>Test Results</span></h1>
+    <div class="meta">
+      <span>📅 Sun, May 10 2026</span>
+      <span>🕐 05:02 UTC</span>
+      <span>🌐 https://dtmu1974.github.io/job-tracker-v3/</span>
+      <span>🤖 Playwright + Claude MCP</span>
+    </div>
+  </header>
+
+  <!-- Progress -->
+  <div class="progress-wrap">
+    <div class="progress-bar" style="width:100%"></div>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary">
+    <div class="card total">
+      <div class="card-label">Total Tests</div>
+      <div class="card-value">7</div>
+      <div class="card-sub">steps executed</div>
+    </div>
+    <div class="card passed">
+      <div class="card-label">Passed</div>
+      <div class="card-value">7</div>
+      <div class="card-sub">100% success rate</div>
+    </div>
+    <div class="card failed">
+      <div class="card-label">Failed</div>
+      <div class="card-value">0</div>
+      <div class="card-sub">no failures</div>
+    </div>
+    <div class="card duration">
+      <div class="card-label">Duration</div>
+      <div class="card-value">~8s</div>
+      <div class="card-sub">total runtime</div>
+    </div>
+  </div>
+
+  <!-- Test Steps -->
+  <div class="section-title">Test Steps</div>
+  <div class="steps">
+
+    <div class="step pass" style="animation-delay:0.10s">
+      <div class="step-num">01</div>
+      <div class="step-body">
+        <div class="step-title">Open Job Tracker URL</div>
+        <div class="step-desc">Launched Chromium browser and navigated to the target URL.</div>
+        <div class="step-url">→ https://dtmu1974.github.io/job-tracker-v3/</div>
+      </div>
+      <div class="step-status">
+        <span class="status-pill">PASS</span>
+        <span class="step-time">~1.2s</span>
+      </div>
+    </div>
+
+    <div class="step pass" style="animation-delay:0.15s">
+      <div class="step-num">02</div>
+      <div class="step-body">
+        <div class="step-title">Redirect to Login Page</div>
+        <div class="step-desc">App correctly redirected unauthenticated user to /login.</div>
+        <div class="step-url">→ https://dtmu1974.github.io/login</div>
+      </div>
+      <div class="step-status">
+        <span class="status-pill">PASS</span>
+        <span class="step-time">~0.8s</span>
+      </div>
+    </div>
+
+    <div class="step pass" style="animation-delay:0.20s">
+      <div class="step-num">03</div>
+      <div class="step-body">
+        <div class="step-title">Enter Username</div>
+        <div class="step-desc">Filled username field with value <code style="color:var(--pass);font-family:var(--mono)">ddo</code>.</div>
+      </div>
+      <div class="step-status">
+        <span class="status-pill">PASS</span>
+        <span class="step-time">~0.3s</span>
+      </div>
+    </div>
+
+    <div class="step pass" style="animation-delay:0.25s">
+      <div class="step-num">04</div>
+      <div class="step-body">
+        <div class="step-title">Enter Password</div>
+        <div class="step-desc">Filled password field with provided credentials.</div>
+      </div>
+      <div class="step-status">
+        <span class="status-pill">PASS</span>
+        <span class="step-time">~0.2s</span>
+      </div>
+    </div>
+
+    <div class="step pass" style="animation-delay:0.30s">
+      <div class="step-num">05</div>
+      <div class="step-body">
+        <div class="step-title">Click Login Button</div>
+        <div class="step-desc">Clicked the Login submit button to authenticate the user.</div>
+      </div>
+      <div class="step-status">
+        <span class="status-pill">PASS</span>
+        <span class="step-time">~0.5s</span>
+      </div>
+    </div>
+
+    <div class="step pass" style="animation-delay:0.35s">
+      <div class="step-num">06</div>
+      <div class="step-body">
+        <div class="step-title">Verify Login Success</div>
+        <div class="step-desc">Confirmed URL exited /login. Logout button displayed <code style="color:var(--pass);font-family:var(--mono)">Logout (ddo)</code> — user identity verified.</div>
+        <div class="step-url">→ https://dtmu1974.github.io/profile</div>
+      </div>
+      <div class="step-status">
+        <span class="status-pill">PASS</span>
+        <span class="step-time">~1.4s</span>
+      </div>
+    </div>
+
+    <div class="step pass" style="animation-delay:0.40s">
+      <div class="step-num">07</div>
+      <div class="step-body">
+        <div class="step-title">Navigate to Profile Page</div>
+        <div class="step-desc">Clicked Profile nav link. Page loaded with heading <code style="color:var(--pass);font-family:var(--mono)">"User Profile: ddo"</code>. Profile data confirmed visible.</div>
+        <div class="step-url">→ https://dtmu1974.github.io/profile</div>
+      </div>
+      <div class="step-status">
+        <span class="status-pill">PASS</span>
+        <span class="step-time">~0.9s</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Console Log -->
+  <div class="section-title">Console Output</div>
+  <div class="log-block">
+    <div class="log-line"><span class="log-time">00:00.0</span><span class="log-icon">🌐</span><span class="log-msg info">Opening Job Tracker...</span></div>
+    <div class="log-line"><span class="log-time">00:01.2</span><span class="log-icon">📄</span><span class="log-msg info">Login page loaded: https://dtmu1974.github.io/login</span></div>
+    <div class="log-line"><span class="log-time">00:02.0</span><span class="log-icon">🔑</span><span class="log-msg dim">Entering credentials...</span></div>
+    <div class="log-line"><span class="log-time">00:02.5</span><span class="log-icon">🖱️</span><span class="log-msg dim">Clicking Login button...</span></div>
+    <div class="log-line"><span class="log-time">00:03.9</span><span class="log-icon">✅</span><span class="log-msg ok">Login successful! Current page: https://dtmu1974.github.io/profile</span></div>
+    <div class="log-line"><span class="log-time">00:04.0</span><span class="log-icon">👤</span><span class="log-msg ok">Logged in as: ddo</span></div>
+    <div class="log-line"><span class="log-time">00:04.1</span><span class="log-icon">📋</span><span class="log-msg dim">Navigating to Profile page...</span></div>
+    <div class="log-line"><span class="log-time">00:05.0</span><span class="log-icon">📄</span><span class="log-msg info">Profile page loaded: https://dtmu1974.github.io/profile</span></div>
+    <div class="log-line"><span class="log-time">00:05.1</span><span class="log-icon">✅</span><span class="log-msg ok">Profile verified: "User Profile: ddo"</span></div>
+    <div class="log-line"><span class="log-time">00:05.2</span><span class="log-icon">🔒</span><span class="log-msg dim">Closing browser...</span></div>
+    <div class="log-line"><span class="log-time">00:05.3</span><span class="log-icon">✅</span><span class="log-msg ok">Done.</span></div>
+  </div>
+
+  <!-- Environment -->
+  <div class="section-title">Environment</div>
+  <div class="env-grid">
+    <div class="env-row"><span class="env-key">Browser</span><span class="env-val">Chromium (Playwright)</span></div>
+    <div class="env-row"><span class="env-key">Execution Mode</span><span class="env-val">Headed (headless: false)</span></div>
+    <div class="env-row"><span class="env-key">Automation Engine</span><span class="env-val">Claude MCP + Playwright</span></div>
+    <div class="env-row"><span class="env-key">Target URL</span><span class="env-val">dtmu1974.github.io</span></div>
+    <div class="env-row"><span class="env-key">Test User</span><span class="env-val">ddo</span></div>
+    <div class="env-row"><span class="env-key">Auth Method</span><span class="env-val">Username / Password</span></div>
+    <div class="env-row"><span class="env-key">Date</span><span class="env-val">Sun, 10 May 2026</span></div>
+    <div class="env-row"><span class="env-key">Overall Result</span><span class="env-val" style="color:var(--pass);font-weight:700">✅ ALL PASSED</span></div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    Generated by <strong>Claude (Anthropic)</strong> · Playwright MCP Automation · 7/7 tests passed · 0 failures
+  </footer>
+
+</div>
+</body>
+</html>
