@@ -26,12 +26,25 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run Job Tracker automation
-        run: npm test
+      # ── Positive Tests ───────────────────────────────────────────────────
+      - name: Run Positive Tests (Login + Profile)
+        run: node job_tracker_automation.js
 
-      - name: Upload test report
+      # ── Negative Tests ───────────────────────────────────────────────────
+      - name: Run Negative Tests (Invalid Login)
+        run: node job_tracker_negative_test.js
+
+      # ── Upload both reports ──────────────────────────────────────────────
+      - name: Upload Positive Test Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-report
+          name: positive-test-report
           path: job_tracker_test_report.html
+
+      - name: Upload Negative Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: negative-test-report
+          path: job_tracker_negative_test_report.html
