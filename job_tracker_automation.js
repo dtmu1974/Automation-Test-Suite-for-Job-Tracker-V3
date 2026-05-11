@@ -199,6 +199,14 @@ const fs = require('fs');
 </body>
 </html>`;
 
+fs.writeFileSync('positive_results.json', JSON.stringify({
+  suite:    'Positive — Login & Profile',
+  duration: parseFloat(totalDuration),
+  passed:   results.filter(r => r.status === 'pass').length,
+  failed:   results.filter(r => r.status === 'fail').length,
+  steps:    results
+}, null, 2));
+
   fs.writeFileSync('job_tracker_test_report.html', html);
   console.log(`📊 Report generated: job_tracker_test_report.html (${passed}/${results.length} passed, ${totalDuration}s)`);
 })();

@@ -338,6 +338,16 @@ const fs = require('fs');
 </body>
 </html>`;
 
+fs.writeFileSync('negative_results.json', JSON.stringify({
+  suite:    'Negative — Invalid Login Attempts',
+  duration: parseFloat(totalDuration),
+  passed:   results.filter(r => r.status === 'pass').length,
+  failed:   results.filter(r => r.status === 'fail').length,
+  steps:    results,
+  tc1Steps: results.slice(0, tc2StartIdx),
+  tc2Steps: results.slice(tc2StartIdx)
+}, null, 2));
+
   fs.writeFileSync('job_tracker_negative_test_report.html', html);
   console.log('📄 Report saved: job_tracker_negative_test_report.html');
 })();
