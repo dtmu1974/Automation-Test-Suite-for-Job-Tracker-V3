@@ -15,7 +15,7 @@ const { chromium } = require('playwright');
 
 (async () => {
   // ── 1. Launch browser ────────────────────────────────────────────────────
-  const browser = await chromium.launch({ headless: false }); // set true to run silently
+  const browser = await chromium.launch({ headless: true }); // set true to run silently
   const context = await browser.newContext();
   const page    = await context.newPage();
 
